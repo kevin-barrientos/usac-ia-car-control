@@ -2,7 +2,6 @@ package gt.edu.usac.ingenieria.ia.smartcarcontrol;
 
 import android.app.Service;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,21 +19,30 @@ import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
+/**
+ * It is a bound service which handles the comunication with a
+ * web socket server. The services needs a {@link ResultReceiver}
+ * to deliver the result to the client.
+ *
+ * Each result has an action code, result code and result message.
+ * @see SocketService#setResultReceiver(ResultReceiver)
+ * @see SocketService#sendResponseToClient(int, int, String)
+ */
 public class SocketService extends Service {
 
     // ACTIONS
-    private static final int CONNECT = 1;
-    private static final int DISCONNECT = 2;
-    private static final int SEND = 3;
+    public static final int CONNECT = 1;
+    public static final int DISCONNECT = 2;
+    public static final int SEND = 3;
+    public static final int SERVER_RESPONSE = 4;
 
     // KEYS
     public static final String RESULT_MESSAGE = "gt.edu.usac.ingenieria.ia.RESULT_MESSAGE";
-    public static final String SERVER_RESPONSE_MESSAGE = "gt.edu.usac.ingenieria.ia.SERVER_RESPONSE_MESSAGE";
+    public static final String ACTION = "gt.edu.usac.ingenieria.ia.ACTION";
 
     // RESULT CODES
     public static final int SUCCESS = 0;
     public static final int ERROR = -1;
-    public static final int SERVER_RESPONSE = 1;
 
     // Binder given to clients
     private final IBinder mBinder = new LocalBinder();
@@ -90,16 +98,10 @@ public class SocketService extends Service {
             mReciveWorkerThread.start();
 
             // send connection succesful message
-            result = new Bundle();
-            result.putString(RESULT_MESSAGE, "connected :D!");
-            if(mResultReciver != null)
-                mResultReciver.send(SUCCESS, result);
+            sendResponseToClient(CONNECT, SUCCESS, "connected :D!");
 
         } catch (IOException e) {
-            result = new Bundle();
-            result.putString(RESULT_MESSAGE, e.getMessage());
-            if(mResultReciver != null)
-                mResultReciver.send(ERROR, result);
+            sendResponseToClient(CONNECT, ERROR, e.getMessage());
         }
 
     }
@@ -117,7 +119,6 @@ public class SocketService extends Service {
     private void handleCloseConnection(){
         int resultCode = SUCCESS;
         String message = "";
-        Bundle result = new Bundle();
         if(mSocket != null && !mSocket.isClosed()){
             try {
                 mSocket.close();
@@ -127,8 +128,7 @@ public class SocketService extends Service {
                 message = e.getMessage();
             }
         }
-        result.putString(RESULT_MESSAGE, message);
-        mResultReciver.send(resultCode, result);
+        sendResponseToClient(DISCONNECT, resultCode, message);
     }
 
     /**
@@ -146,6 +146,8 @@ public class SocketService extends Service {
     private void handleSendMessage(int command){
         if(mSocket != null && mSocket.isConnected()){
             mOutputSocketWriter.println(String.valueOf(command));
+        }else{
+            sendResponseToClient(SEND, ERROR, "There was a problem with the connection, try again later.");
         }
     }
 
@@ -206,19 +208,28 @@ public class SocketService extends Service {
             Bundle result;
             while (mSocket.isConnected()){
                 try {
-                    if((message = mInputSocketReader.readLine()) != null && mResultReciver != null){
-                        result = new Bundle();
-                        result.putString(SERVER_RESPONSE_MESSAGE, message);
-                        mResultReciver.send(SERVER_RESPONSE, result);
+                    if((message = mInputSocketReader.readLine()) != null){
+                        sendResponseToClient(SERVER_RESPONSE, SUCCESS, message);
                     }
                 } catch (IOException e) {
-                    if(mResultReciver != null){
-                        result = new Bundle();
-                        result.putString(RESULT_MESSAGE, e.getMessage());
-                        mResultReciver.send(ERROR, result);
-                    }
+                    sendResponseToClient(SERVER_RESPONSE, ERROR, e.getMessage());
                 }
             }
+        }
+    }
+
+    /**
+     * Sends a response to the client through a {@link ResultReceiver}
+     * @param action the action that was handled. {@link #CONNECT} | {@link #DISCONNECT} | {@link #SEND} | {@link #SERVER_RESPONSE}
+     * @param resultCode the result code for the handled action
+     * @param resultMessage the result message of the action
+     */
+    private void sendResponseToClient(int action, int resultCode, String resultMessage){
+        if(mResultReciver != null){
+            Bundle result = new Bundle();
+            result.putInt(ACTION, action);
+            result.putString(RESULT_MESSAGE, resultMessage);
+            mResultReciver.send(resultCode, result);
         }
     }
 

@@ -1,21 +1,29 @@
 package gt.edu.usac.ingenieria.ia.smartcarcontrol;
 
+import android.animation.AnimatorInflater;
+import android.animation.AnimatorSet;
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.ResultReceiver;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
@@ -26,6 +34,13 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
     private MazeFragment mMazeFragment;
     private SocketService mSocketService;
     private Boolean mBound = false;
+    private Boolean mSocketConnected = false;
+
+    @BindView(R.id.progressbar)
+    ProgressBar mProgressBar;
+
+    @BindView(R.id.fab)
+    FloatingActionButton mFab;
 
     /** Defines callbacks for service binding, passed to bindService() */
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -83,13 +98,15 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
 
     @OnClick(R.id.fab)
     public void onFabClicked(View fab){
-        if (mBound) {
-            // Call a method from the LocalService.
-            // However, if this call were something that might hang, then this request should
-            // occur in a separate thread to avoid slowing down the activity performance.
-//            int num = mSocketService.getRandomNumber();
+        if (!mBound) {
+            return;
+        }
+
+        mProgressBar.setVisibility(View.VISIBLE);
+        if(!mSocketConnected){
             mSocketService.connect();
-//            Snackbar.make(fab, "number: " + num, Snackbar.LENGTH_LONG).setAction("Action", null).show();
+        }else{
+            mSocketService.closeConnection();
         }
     }
 
@@ -117,6 +134,59 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
 
     }
 
+    private void connected(){
+        mSocketConnected = true;
+        mProgressBar.setVisibility(View.INVISIBLE);
+        flipFab(R.animator.rotate_yaxis_180);
+        changeFabIcon(R.drawable.ic_cloud_off_white_24dp);
+    }
+
+    private void disconnected(){
+        mSocketConnected = false;
+        mProgressBar.setVisibility(View.INVISIBLE);
+        flipFab(R.animator.rotate_yaxis_0);
+        changeFabIcon(R.drawable.ic_cloud_done_white_24dp);
+    }
+
+    private void flipFab(int resourceId){
+        AnimatorSet set = (AnimatorSet) AnimatorInflater.loadAnimator(MainActivity.this, resourceId);
+        set.setTarget(mFab);
+        set.start();
+    }
+
+    private void changeFabIcon(final int drawableId){
+        new AsyncTask<Integer, Integer, Integer>() {
+            @Override
+            protected Integer doInBackground(Integer... integers) {
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+            @Override
+            protected void onPostExecute(Integer integer) {
+                super.onPostExecute(integer);
+                mFab.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, drawableId));
+            }
+        }.execute();
+    }
+
+    private void serverResponse(String response){
+        try{
+            int direction = -1;
+            direction = Integer.parseInt(response);
+            if(direction == ControlsFragment.MOVE){
+                mMazeFragment.draw(mCar.move());
+            }else{
+                mCar.turn(direction);
+            }
+        }catch (NumberFormatException e){
+            // do nothing
+        }
+    }
+
     @SuppressLint("ParcelCreator")
     public class MyReciver extends ResultReceiver{
 
@@ -128,30 +198,26 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
         protected void onReceiveResult(int resultCode, Bundle resultData) {
             super.onReceiveResult(resultCode, resultData);
 
-            switch (resultCode){
-                case SocketService.SUCCESS:
-                    Toast.makeText(MainActivity.this, resultData.getString(SocketService.RESULT_MESSAGE), Toast.LENGTH_SHORT).show();
-                    break;
-                case SocketService.ERROR:
-                    Toast.makeText(MainActivity.this, resultData.getString(SocketService.RESULT_MESSAGE), Toast.LENGTH_SHORT).show();
-                    break;
-                case SocketService.SERVER_RESPONSE:
-                    String response = resultData.getString(SocketService.SERVER_RESPONSE_MESSAGE, null);
-                    try{
-                        int direction = -1;
-                        direction = Integer.parseInt(response);
-                        if(direction == ControlsFragment.MOVE){
-                            mMazeFragment.draw(mCar.move());
-                        }else{
-                            mCar.turn(direction);
-                        }
-                    }catch (NumberFormatException e){
-                        Toast.makeText(MainActivity.this, response, Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                default:
-                    Toast.makeText(MainActivity.this, "The process returned an unrecognized result code (" + resultCode + ")", Toast.LENGTH_SHORT).show();
-                    break;
+            int action = resultData.getInt(SocketService.ACTION);
+
+            if(resultCode == SocketService.SUCCESS){
+                switch (action){
+                    case SocketService.CONNECT:
+                        connected();
+                        break;
+                    case SocketService.DISCONNECT:
+                        disconnected();
+                        break;
+                    case SocketService.SERVER_RESPONSE:
+                        String response = resultData.getString(SocketService.RESULT_MESSAGE, null);
+                        serverResponse(response);
+                        break;
+                }
+            }else {
+                if(action == SocketService.CONNECT || action == SocketService.DISCONNECT){
+                    mProgressBar.setVisibility(View.INVISIBLE);
+                }
+                Snackbar.make(mFab, resultData.getString(SocketService.RESULT_MESSAGE, "Error"), Snackbar.LENGTH_SHORT).show();
             }
         }
 
