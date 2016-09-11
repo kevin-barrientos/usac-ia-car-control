@@ -14,20 +14,27 @@ import android.os.IBinder;
 import android.os.ResultReceiver;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ProgressBar;
-import android.widget.Toast;
+
+import com.dmitrymalkovich.android.ProgressFloatingActionButton;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-public class MainActivity extends AppCompatActivity implements ControlsFragment.OnControlFragmentInteraction {
+public class MainActivity extends AppCompatActivity implements ControlsFragment.OnControlFragmentInteraction, FragmentManager.OnBackStackChangedListener {
 
 
     private final Car mCar = new Car();
@@ -35,12 +42,16 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
     private SocketService mSocketService;
     private Boolean mBound = false;
     private Boolean mSocketConnected = false;
+    private Boolean mIsControlFragmentVisible = false;
 
     @BindView(R.id.progressbar)
     ProgressBar mProgressBar;
 
     @BindView(R.id.fab)
     FloatingActionButton mFab;
+
+    @BindView(R.id.fab_wrapper)
+    ProgressFloatingActionButton mFabWrapper;
 
     /** Defines callbacks for service binding, passed to bindService() */
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -50,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             SocketService.LocalBinder binder = (SocketService.LocalBinder) service;
             mSocketService = binder.getService();
-            mSocketService.setResultReceiver(new MyReciver(new Handler()));
+            mSocketService.setResultReceiver(new MainActivityReciver(new Handler()));
             mBound = true;
         }
 
@@ -60,6 +71,11 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
         }
     };
 
+    /**
+     * Gesture detector to listen for fling up gesture and a fling down gesture.
+     */
+    private GestureDetectorCompat mDetector;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,6 +84,10 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
         setSupportActionBar(toolbar);
 
         mMazeFragment = (MazeFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_maze);
+
+        mDetector = new GestureDetectorCompat(this, new GestureListener());
+
+        this.getSupportFragmentManager().addOnBackStackChangedListener(this);
 
         ButterKnife.bind(this);
     }
@@ -134,6 +154,26 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
 
     }
 
+    @Override
+    public boolean onTouchEvent(MotionEvent event){
+        this.mDetector.onTouchEvent(event);
+        // Be sure to call the superclass implementation
+        return super.onTouchEvent(event);
+    }
+
+    @Override
+    public void onBackStackChanged() {
+        int count = getSupportFragmentManager().getBackStackEntryCount();
+        if(count == 1){
+            mIsControlFragmentVisible = true;
+        }else if(count == 0){
+            mIsControlFragmentVisible = false;
+
+            int fabMargin = (int) getResources().getDimension(R.dimen.fab_margin);
+            setMargins(mFabWrapper, fabMargin, fabMargin, fabMargin, fabMargin);
+        }
+    }
+
     private void connected(){
         mSocketConnected = true;
         mProgressBar.setVisibility(View.INVISIBLE);
@@ -187,10 +227,39 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
         }
     }
 
-    @SuppressLint("ParcelCreator")
-    public class MyReciver extends ResultReceiver{
+    private void showControlsFragment(){
+        MainActivity.this.getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(R.anim.enter, R.anim.exit)
+                .replace(R.id.controls_containter, ControlsFragment.newInstance())
+                .addToBackStack("Controls")
+                .commit();
 
-        public MyReciver(Handler handler) {
+        int fabHeight = mFab.getHeight();
+        int fabMargin = (int) getResources().getDimension(R.dimen.fab_margin);
+        int controlsHeight = (int) getResources().getDimension(R.dimen.controls_heigth);
+
+        setMargins(mFabWrapper, fabMargin, fabMargin, fabMargin, controlsHeight - fabHeight / 2);
+    }
+
+    private void hideControlsFragment(){
+        MainActivity.this.getSupportFragmentManager().popBackStack();
+
+        int fabMargin = (int) getResources().getDimension(R.dimen.fab_margin);
+        setMargins(mFabWrapper, fabMargin, fabMargin, fabMargin, fabMargin);
+    }
+
+    public static void setMargins (View v, int l, int t, int r, int b) {
+        if (v.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            p.setMargins(l, t, r, b);
+            v.requestLayout();
+        }
+    }
+
+    @SuppressLint("ParcelCreator")
+    private class MainActivityReciver extends ResultReceiver{
+
+        public MainActivityReciver(Handler handler) {
             super(handler);
         }
 
@@ -221,5 +290,24 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
             }
         }
 
+    }
+
+    private class GestureListener extends GestureDetector.SimpleOnGestureListener{
+
+        @Override
+        public boolean onDown(MotionEvent e) {
+            return true;
+        }
+
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            if(velocityY < 0 && !mIsControlFragmentVisible){ // Up
+                showControlsFragment();
+            } else if(velocityY > 0 && mIsControlFragmentVisible) { // down
+                hideControlsFragment();
+            }
+
+            return super.onFling(e1, e2, velocityX, velocityY);
+        }
     }
 }

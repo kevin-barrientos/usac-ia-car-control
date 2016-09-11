@@ -35,24 +35,20 @@
             android:layout_weight="1"
             tools:layout="@layout/fragment_maze" />
 
-        <fragment
-            android:id="@+id/fragment_controls"
-            android:name="gt.edu.usac.ingenieria.ia.smartcarcontrol.ControlsFragment"
+        <FrameLayout
+            android:id="@+id/controls_containter"
             android:layout_width="match_parent"
-            android:layout_height="162dp"
-            tools:layout="@layout/fragment_controls" />
+            android:layout_height="wrap_content"/>
 
     </LinearLayout>
 
 
     <com.dmitrymalkovich.android.ProgressFloatingActionButton
+        android:id="@+id/fab_wrapper"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_marginBottom="128dp"
-        android:layout_marginEnd="@dimen/fab_margin"
-        android:layout_marginStart="@dimen/fab_margin"
-        android:layout_marginTop="@dimen/fab_margin"
+        android:layout_margin="@dimen/fab_margin"
         android:clickable="true">
 
         <android.support.design.widget.FloatingActionButton
