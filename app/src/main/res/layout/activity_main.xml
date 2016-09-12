@@ -21,6 +21,22 @@
 
     </android.support.design.widget.AppBarLayout>
 
+    <FrameLayout
+        android:id="@+id/loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@drawable/white_circule"
+        android:elevation="8dp"
+        android:visibility="gone">
+
+        <ProgressBar
+            style="@style/Widget.AppCompat.ProgressBar"
+            android:layout_width="@dimen/loading_circle_diameter"
+            android:layout_height="@dimen/loading_circle_diameter" />
+
+    </FrameLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -38,10 +54,9 @@
         <FrameLayout
             android:id="@+id/controls_containter"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
-
 
     <com.dmitrymalkovich.android.ProgressFloatingActionButton
         android:id="@+id/fab_wrapper"
@@ -55,7 +70,7 @@
             android:id="@+id/fab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_cloud_done_white_24dp" />
+            android:src="@drawable/ic_play_arrow_white_24dp" />
 
         <ProgressBar
             android:id="@+id/progressbar"
@@ -63,7 +78,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="invisible"
-            tools:visibility="visible"/>
+            tools:visibility="visible" />
 
     </com.dmitrymalkovich.android.ProgressFloatingActionButton>
 

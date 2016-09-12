@@ -8,13 +8,21 @@ public class Car {
     private static final int SOUTH = MazeCanvas.DOWN;
     private static final int EAST = MazeCanvas.RIGHT;
 
-    public static final int RIGTH = 1;
-    public static final int LEFT = 2;
+    // moves
+    public static final int MOVE_FORWARD = 1;
+    public static final int RIGTH = 2;
+    public static final int LEFT = 3;
+
+    public static final int MODE_AUTOMATIC = 1;
+    public static final int MODE_MANUAL = 2;
+
+    private int mMode;
 
     private int currentState;
 
     public Car() {
         currentState = EAST;
+        mMode = MODE_MANUAL;
     }
 
     /**
@@ -46,5 +54,23 @@ public class Car {
      */
     public int move(){
         return currentState;
+    }
+
+    /**
+     * Gets car's mode
+     * @return {@link #MODE_AUTOMATIC} | {@link #MODE_MANUAL}
+     */
+    public int getMode() {
+        return mMode;
+    }
+
+    /**
+     * Sets car's mode. ({@link #MODE_AUTOMATIC} | {@link #MODE_MANUAL})
+     * @param mode
+     */
+    public void setMode(int mode) {
+        if(mode != MODE_AUTOMATIC && mode != MODE_MANUAL)
+            return;
+        this.mMode = mode;
     }
 }

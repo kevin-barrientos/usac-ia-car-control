@@ -15,5 +15,8 @@
     <string name="pref_server_port_key">server_port</string>
     <string name="pref_default_port">9898</string>
     <string name="pref_title_server_port">Server port</string>
+    <string name="action_connect">Connect</string>
+    <string name="action_disconnect">Disconnect</string>
+    <string name="action_erase_image">Erase image</string>
 
 </resources>

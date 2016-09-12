@@ -25,10 +25,12 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 
 import com.dmitrymalkovich.android.ProgressFloatingActionButton;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -38,22 +40,23 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
 
 
     private final Car mCar = new Car();
+    @BindView(R.id.progressbar)
+    ProgressBar mFabProgressBar;
+    @BindView(R.id.fab)
+    FloatingActionButton mFab;
+    @BindView(R.id.fab_wrapper)
+    ProgressFloatingActionButton mFabWrapper;
+    @BindView(R.id.loading)
+    View mLoadingProgressBar;
     private MazeFragment mMazeFragment;
     private SocketService mSocketService;
     private Boolean mBound = false;
     private Boolean mSocketConnected = false;
     private Boolean mIsControlFragmentVisible = false;
 
-    @BindView(R.id.progressbar)
-    ProgressBar mProgressBar;
-
-    @BindView(R.id.fab)
-    FloatingActionButton mFab;
-
-    @BindView(R.id.fab_wrapper)
-    ProgressFloatingActionButton mFabWrapper;
-
-    /** Defines callbacks for service binding, passed to bindService() */
+    /**
+     * Defines callbacks for service binding, passed to bindService()
+     */
     private ServiceConnection mConnection = new ServiceConnection() {
 
         @Override
@@ -111,23 +114,34 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
             Intent settingsActivityIntent = new Intent(this, SettingsActivity.class);
             startActivity(settingsActivityIntent);
             return true;
+        } else if (id == R.id.action_connect && mBound && !mSocketConnected) {
+            setVisibilityLoadingProgressBarVisibility(View.VISIBLE);
+            mSocketService.connect();
+        } else if (id == R.id.action_disconnect && mBound && mSocketConnected) {
+            setVisibilityLoadingProgressBarVisibility(View.VISIBLE);
+            mSocketService.closeConnection();
+        } else if (id == R.id.action_erase_image) {
+            mMazeFragment.mMazeCanvas.erase();
+
         }
 
         return super.onOptionsItemSelected(item);
     }
 
     @OnClick(R.id.fab)
-    public void onFabClicked(View fab){
+    public void onFabClicked(View fab) {
         if (!mBound) {
             return;
         }
 
-        mProgressBar.setVisibility(View.VISIBLE);
-        if(!mSocketConnected){
-            mSocketService.connect();
-        }else{
-            mSocketService.closeConnection();
+        mFabProgressBar.setVisibility(View.VISIBLE);
+
+        if (mCar.getMode() == Car.MODE_AUTOMATIC) {
+            mSocketService.sendMessage(2); //send automatic mode command
+        } else {
+            mSocketService.sendMessage(1); //send manual mode command
         }
+
     }
 
     @Override
@@ -150,12 +164,22 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
 
     @Override
     public void onControlClicked(int direction) {
-        mSocketService.sendMessage(direction);
+        switch (direction){
+            case ControlsFragment.LEFT:
+                mSocketService.sendMessage(5);
+                break;
+            case ControlsFragment.RIGHT:
+                mSocketService.sendMessage(4);
+                break;
+            case ControlsFragment.MOVE:
+                mSocketService.sendMessage(3);
+                break;
+        }
 
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event){
+    public boolean onTouchEvent(MotionEvent event) {
         this.mDetector.onTouchEvent(event);
         // Be sure to call the superclass implementation
         return super.onTouchEvent(event);
@@ -164,9 +188,9 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
     @Override
     public void onBackStackChanged() {
         int count = getSupportFragmentManager().getBackStackEntryCount();
-        if(count == 1){
+        if (count == 1) {
             mIsControlFragmentVisible = true;
-        }else if(count == 0){
+        } else if (count == 0) {
             mIsControlFragmentVisible = false;
 
             int fabMargin = (int) getResources().getDimension(R.dimen.fab_margin);
@@ -174,27 +198,49 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
         }
     }
 
-    private void connected(){
+    /**
+     * Acknowledge the connection by setting {@link #mSocketConnected} to true
+     * and change {@link #mLoadingProgressBar} visibility to GONE.
+     * @see #setVisibilityLoadingProgressBarVisibility(int)
+     */
+    private void connected() {
         mSocketConnected = true;
-        mProgressBar.setVisibility(View.INVISIBLE);
-        flipFab(R.animator.rotate_yaxis_180);
-        changeFabIcon(R.drawable.ic_cloud_off_white_24dp);
+        setVisibilityLoadingProgressBarVisibility(View.GONE);
+        Snackbar.make(mFab, "Connected :D", Snackbar.LENGTH_SHORT).show();
     }
 
-    private void disconnected(){
+    /**
+     * Acknowledge the disconnection by setting {@link #mSocketConnected} to false
+     * and change {@link #mLoadingProgressBar} visibility to GONE.
+     * @see #setVisibilityLoadingProgressBarVisibility(int)
+     */
+    private void disconnected() {
         mSocketConnected = false;
-        mProgressBar.setVisibility(View.INVISIBLE);
+
+        mCar.setMode(Car.MODE_MANUAL);
         flipFab(R.animator.rotate_yaxis_0);
-        changeFabIcon(R.drawable.ic_cloud_done_white_24dp);
+        changeFabIcon(R.drawable.ic_play_arrow_white_24dp);
+
+        setVisibilityLoadingProgressBarVisibility(View.GONE);
     }
 
-    private void flipFab(int resourceId){
+    /**
+     * Flip the {@link #mFab} using an Animator resource
+     * @param resourceId the animator resource. {@link gt.edu.usac.ingenieria.ia.smartcarcontrol.R.animator#rotate_yaxis_0} |
+     *                   {@link gt.edu.usac.ingenieria.ia.smartcarcontrol.R.animator#rotate_yaxis_180}
+     */
+    private void flipFab(int resourceId) {
         AnimatorSet set = (AnimatorSet) AnimatorInflater.loadAnimator(MainActivity.this, resourceId);
         set.setTarget(mFab);
         set.start();
     }
 
-    private void changeFabIcon(final int drawableId){
+    /**
+     * Changes {@link #mFab} icon
+     * @param drawableId drawable resource id. {@link gt.edu.usac.ingenieria.ia.smartcarcontrol.R.drawable#ic_play_arrow_white_24dp} |
+     *                   {@link gt.edu.usac.ingenieria.ia.smartcarcontrol.R.drawable#ic_stop_white_24dp}
+     */
+    private void changeFabIcon(final int drawableId) {
         new AsyncTask<Integer, Integer, Integer>() {
             @Override
             protected Integer doInBackground(Integer... integers) {
@@ -205,6 +251,7 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
                 }
                 return null;
             }
+
             @Override
             protected void onPostExecute(Integer integer) {
                 super.onPostExecute(integer);
@@ -213,21 +260,54 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
         }.execute();
     }
 
-    private void serverResponse(String response){
-        try{
-            int direction = -1;
-            direction = Integer.parseInt(response);
-            if(direction == ControlsFragment.MOVE){
-                mMazeFragment.draw(mCar.move());
-            }else{
-                mCar.turn(direction);
+    /**
+     * Handles the response recived through the socket created by {@link #mSocketService}
+     * @param response json string
+     */
+    private void serverResponse(String response) {
+        try {
+            JSONObject jsonObject = new JSONObject(response);
+
+            if (jsonObject.has("command")) { // we manully send a command
+
+                int command = jsonObject.getInt("command");
+                int resultCode = jsonObject.getInt("result_code");
+
+                if (resultCode != 0) { // the command was not succesfully processed
+                    Snackbar.make(mFab, jsonObject.has("message") ? jsonObject.getString("message") : "There was a server fault. Pleas try again later.", Snackbar.LENGTH_SHORT).show();
+                    return;
+                }
+
+                switch (command) {
+                    case 1: // automatic mode command
+                        mCar.setMode(Car.MODE_AUTOMATIC);
+                        flipFab(R.animator.rotate_yaxis_180);
+                        changeFabIcon(R.drawable.ic_stop_white_24dp);
+                        break;
+                    case 2: // manual mode command
+                        mCar.setMode(Car.MODE_MANUAL);
+                        flipFab(R.animator.rotate_yaxis_0);
+                        changeFabIcon(R.drawable.ic_play_arrow_white_24dp);
+                        break;
+                }
+
+            } else if (jsonObject.has("action")) { // the car took a move
+                int action = jsonObject.getInt("action");
+                if (action == Car.MOVE_FORWARD) {
+                    mMazeFragment.draw(mCar.move());
+                } else {
+                    mCar.turn(action);
+                }
             }
-        }catch (NumberFormatException e){
-            // do nothing
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
     }
 
-    private void showControlsFragment(){
+    /**
+     * Shows {@link ControlsFragment}
+     */
+    private void showControlsFragment() {
         MainActivity.this.getSupportFragmentManager().beginTransaction()
                 .setCustomAnimations(R.anim.enter, R.anim.exit)
                 .replace(R.id.controls_containter, ControlsFragment.newInstance())
@@ -241,14 +321,25 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
         setMargins(mFabWrapper, fabMargin, fabMargin, fabMargin, controlsHeight - fabHeight / 2);
     }
 
-    private void hideControlsFragment(){
+    /**
+     * Hides {@link ControlsFragment}
+     */
+    private void hideControlsFragment() {
         MainActivity.this.getSupportFragmentManager().popBackStack();
 
         int fabMargin = (int) getResources().getDimension(R.dimen.fab_margin);
         setMargins(mFabWrapper, fabMargin, fabMargin, fabMargin, fabMargin);
     }
 
-    public static void setMargins (View v, int l, int t, int r, int b) {
+    /**
+     * Sets the margin of any view instanceof {@link ViewGroup.MarginLayoutParams}
+     * @param v the view
+     * @param l left margin
+     * @param t topo margin
+     * @param r right margin
+     * @param b bottom margin
+     */
+    private void setMargins(View v, int l, int t, int r, int b) {
         if (v.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
             ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
             p.setMargins(l, t, r, b);
@@ -256,8 +347,25 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
         }
     }
 
+    /**
+     * Sets the visibility fo the {@link #mLoadingProgressBar} animating it using
+     * an animator.
+     * @param visibility {@link View#VISIBLE} | {@link View#GONE}
+     */
+    private void setVisibilityLoadingProgressBarVisibility(int visibility) {
+        int animatorId = visibility == View.VISIBLE ? R.animator.aparecer : R.animator.desaparecer;
+        ;
+        AnimatorSet set = (AnimatorSet) AnimatorInflater.loadAnimator(MainActivity.this, animatorId);
+        set.setTarget(mLoadingProgressBar);
+        set.start();
+        mLoadingProgressBar.setVisibility(visibility);
+    }
+
+    /**
+     * Result receiver that will be passed to {@link SocketService} to handle IPC.
+     */
     @SuppressLint("ParcelCreator")
-    private class MainActivityReciver extends ResultReceiver{
+    private class MainActivityReciver extends ResultReceiver {
 
         public MainActivityReciver(Handler handler) {
             super(handler);
@@ -269,8 +377,8 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
 
             int action = resultData.getInt(SocketService.ACTION);
 
-            if(resultCode == SocketService.SUCCESS){
-                switch (action){
+            if (resultCode == SocketService.SUCCESS) {
+                switch (action) {
                     case SocketService.CONNECT:
                         connected();
                         break;
@@ -278,21 +386,34 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
                         disconnected();
                         break;
                     case SocketService.SERVER_RESPONSE:
+
+                        if (mFabProgressBar.getVisibility() == View.VISIBLE) {
+                            mFabProgressBar.setVisibility(View.INVISIBLE);
+                        }
+
                         String response = resultData.getString(SocketService.RESULT_MESSAGE, null);
                         serverResponse(response);
                         break;
                 }
-            }else {
-                if(action == SocketService.CONNECT || action == SocketService.DISCONNECT){
-                    mProgressBar.setVisibility(View.INVISIBLE);
+            } else {
+                if (action == SocketService.CONNECT || action == SocketService.DISCONNECT) {
+                    setVisibilityLoadingProgressBarVisibility(View.GONE);
+                } else if (action == SocketService.SEND) {
+                    mFabProgressBar.setVisibility(View.INVISIBLE);
                 }
-                Snackbar.make(mFab, resultData.getString(SocketService.RESULT_MESSAGE, "Error"), Snackbar.LENGTH_SHORT).show();
+
+                String errorMessage = resultData.getString(SocketService.RESULT_MESSAGE, "Error");
+                Snackbar.make(mFab, errorMessage, errorMessage.length() > 45 ? Snackbar.LENGTH_LONG : Snackbar.LENGTH_SHORT).show();
             }
         }
 
     }
 
-    private class GestureListener extends GestureDetector.SimpleOnGestureListener{
+    /**
+     * Class that extends from {@link android.view.GestureDetector.SimpleOnGestureListener}
+     * to detect when the user flings up or down.
+     */
+    private class GestureListener extends GestureDetector.SimpleOnGestureListener {
 
         @Override
         public boolean onDown(MotionEvent e) {
@@ -301,9 +422,9 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
 
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            if(velocityY < 0 && !mIsControlFragmentVisible){ // Up
+            if (velocityY < 0 && !mIsControlFragmentVisible) { // Up
                 showControlsFragment();
-            } else if(velocityY > 0 && mIsControlFragmentVisible) { // down
+            } else if (velocityY > 0 && mIsControlFragmentVisible) { // down
                 hideControlsFragment();
             }
 

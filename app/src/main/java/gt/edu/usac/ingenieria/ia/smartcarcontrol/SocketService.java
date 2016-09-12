@@ -43,6 +43,7 @@ public class SocketService extends Service {
     // RESULT CODES
     public static final int SUCCESS = 0;
     public static final int ERROR = -1;
+    public static final int ERROR_SOCKET_NOT_CONNECTED = -2;
 
     // Binder given to clients
     private final IBinder mBinder = new LocalBinder();
@@ -147,7 +148,7 @@ public class SocketService extends Service {
         if(mSocket != null && mSocket.isConnected()){
             mOutputSocketWriter.println(String.valueOf(command));
         }else{
-            sendResponseToClient(SEND, ERROR, "There was a problem with the connection, try again later.");
+            sendResponseToClient(SEND, ERROR_SOCKET_NOT_CONNECTED, "Phone is not connected, please stablish a connection firt and try again.");
         }
     }
 
@@ -221,7 +222,7 @@ public class SocketService extends Service {
     /**
      * Sends a response to the client through a {@link ResultReceiver}
      * @param action the action that was handled. {@link #CONNECT} | {@link #DISCONNECT} | {@link #SEND} | {@link #SERVER_RESPONSE}
-     * @param resultCode the result code for the handled action
+     * @param resultCode the result code for the handled action {@link #ERROR} | {@link #ERROR_SOCKET_NOT_CONNECTED}
      * @param resultMessage the result message of the action
      */
     private void sendResponseToClient(int action, int resultCode, String resultMessage){

@@ -42,23 +42,6 @@ public class MazeFragment extends Fragment {
 
     @SuppressWarnings("ConstantConditions") //this fragment DOES have a layout
     public void draw(int direction){
-//        String directionName = "";
-//        switch (direction){
-//            case MazeView.UP:
-//                directionName = "UP";
-//                break;
-//            case MazeView.DOWN:
-//                directionName = "DOWN";
-//                break;
-//            case MazeView.LEFT:
-//                directionName = "LEFT";
-//                break;
-//            case MazeView.RIGHT:
-//                directionName = "RIGHT";
-//                break;
-//        }
-
-//        Snackbar.make(getView(), "Direccion: " + directionName, Snackbar.LENGTH_SHORT).show();
         if(mMazeCanvas.getmBitmap() == null){
             mMazeCanvas.setBitmap(Bitmap.createBitmap(mMazeView.getWidth()/*100*/, mMazeView.getHeight()/*100*/, Bitmap.Config.ARGB_8888));
         }

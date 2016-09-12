@@ -96,4 +96,9 @@ public class MazeCanvas extends Canvas {
             y0 = bitmap.getHeight()/2;
         }
     }
+
+    public void erase(){
+        init();
+        drawColor(Color.WHITE);
+    }
 }
