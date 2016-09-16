@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/pref_header_car">
+
+        <EditTextPreference
+            android:defaultValue="@string/pref_default_left_turn_time"
+            android:inputType="number"
+            android:key="@string/pref_left_turn_time_key"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/pref_title_left_turn_time" />
+
+        <EditTextPreference
+            android:defaultValue="@string/pref_default_right_turn_time"
+            android:inputType="number"
+            android:key="@string/pref_right_turn_time_key"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/pref_title_right_turn_time" />
+
+        <EditTextPreference
+            android:defaultValue="@string/pref_default_move_time"
+            android:inputType="number"
+            android:key="@string/pref_move_time_key"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/pref_title_move_time" />
+
+        <EditTextPreference
+            android:defaultValue="@string/pref_default_left_wheel_power"
+            android:inputType="number"
+            android:key="@string/pref_left_wheel_power_key"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/pref_title_left_wheel_power" />
+
+        <EditTextPreference
+            android:defaultValue="@string/pref_default_right_wheel_power"
+            android:inputType="number"
+            android:key="@string/pref_right_wheel_power_key"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/pref_title_right_wheel_power" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

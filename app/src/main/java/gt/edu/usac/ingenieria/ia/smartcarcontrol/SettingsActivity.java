@@ -219,10 +219,16 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             super.onCreate(savedInstanceState);
 
             addPreferencesFromResource(R.xml.pref_data_sync);
+            addPreferencesFromResource(R.xml.pref_car_power);
             setHasOptionsMenu(true);
 
             bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_server_ip_key)));
             bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_server_port_key)));
+            bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_left_turn_time_key)));
+            bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_right_turn_time_key)));
+            bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_move_time_key)));
+            bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_left_wheel_power_key)));
+            bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_right_wheel_power_key)));
         }
 
         @Override

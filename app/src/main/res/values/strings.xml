@@ -18,5 +18,22 @@
     <string name="action_connect">Connect</string>
     <string name="action_disconnect">Disconnect</string>
     <string name="action_erase_image">Erase image</string>
+    <string name="pref_header_car">Car tunning</string>
+    <string name="pref_default_left_turn_time">300</string>
+    <string name="pref_left_turn_time_key">pref_left_turn_time_key</string>
+    <string name="pref_title_left_turn_time">Left turn time (milis)</string>
+    <string name="pref_default_right_turn_time">300</string>
+    <string name="pref_right_turn_time_key">pref_right_turn_time_key</string>
+    <string name="pref_title_right_turn_time">Right turn time (milis)</string>
+    <string name="pref_default_left_wheel_power">100</string>
+    <string name="pref_left_wheel_power_key">pref_left_wheel_power_key</string>
+    <string name="pref_title_left_wheel_power">Left wheel power</string>
+    <string name="pref_default_right_wheel_power">100</string>
+    <string name="pref_right_wheel_power_key">pref_right_wheel_power_key</string>
+    <string name="pref_title_right_wheel_power">Right wheel power</string>
+    <string name="action_send_config">Send car config</string>
+    <string name="pref_default_move_time">300</string>
+    <string name="pref_move_time_key">pref_move_time_key</string>
+    <string name="pref_title_move_time">Move time</string>
 
 </resources>

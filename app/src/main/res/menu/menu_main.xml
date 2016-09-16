@@ -15,6 +15,11 @@
         android:icon="@drawable/ic_phonelink_erase_white_24dp"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/action_send_config"
+        android:orderInCategory="3"
+        android:title="@string/action_send_config"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_erase_image"
         android:orderInCategory="3"
         android:title="@string/action_erase_image"

@@ -122,6 +122,8 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
         } else if (id == R.id.action_erase_image) {
             mCar.init();
             mMazeFragment.mMazeCanvas.erase();
+        } else if( id == R.id.action_send_config){
+            mSocketService.sendConfig();
         }
 
         return super.onOptionsItemSelected(item);

@@ -2,6 +2,7 @@ package gt.edu.usac.ingenieria.ia.smartcarcontrol;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,6 +12,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.ResultReceiver;
 import android.preference.PreferenceManager;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,6 +37,7 @@ public class SocketService extends Service {
     public static final int DISCONNECT = 2;
     public static final int SEND = 3;
     public static final int SERVER_RESPONSE = 4;
+    public static final int SEND_CONFIG = 5;
 
     // KEYS
     public static final String RESULT_MESSAGE = "gt.edu.usac.ingenieria.ia.RESULT_MESSAGE";
@@ -155,6 +158,26 @@ public class SocketService extends Service {
         }
     }
 
+    public void sendConfig(){
+        Message.obtain(mSendServiceHandler, SEND_CONFIG).sendToTarget();
+    }
+
+    private void handleSendConfig(){
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String leftTurnTime = sharedPreferences.getString(getString(R.string.pref_left_turn_time_key), getString(R.string.pref_default_left_turn_time));
+        String rightTurnTime = sharedPreferences.getString(getString(R.string.pref_right_turn_time_key), getString(R.string.pref_default_right_turn_time));
+        String leftWheelPower = sharedPreferences.getString(getString(R.string.pref_left_wheel_power_key), getString(R.string.pref_default_left_wheel_power));
+        String rightWheelPower = sharedPreferences.getString(getString(R.string.pref_right_wheel_power_key), getString(R.string.pref_default_left_wheel_power));
+        String moveTime = sharedPreferences.getString(getString(R.string.pref_move_time_key), getString(R.string.pref_default_move_time));
+
+        if(mSocket != null && mSocket.isConnected()){
+            mOutputSocketWriter.println("c " + leftTurnTime + " " + rightTurnTime + " " + leftWheelPower + " " + rightWheelPower + " " + moveTime);
+            Toast.makeText(this, "Configuracion enviada", Toast.LENGTH_SHORT).show();
+        }else{
+            sendResponseToClient(SEND, ERROR_SOCKET_NOT_CONNECTED, "Phone is not connected, please stablish a connection firt and try again.");
+        }
+    }
+
     /**
      * Class used for the client Binder.  Because we know this service always
      * runs in the same process as its clients, we don't need to deal with IPC.
@@ -191,6 +214,9 @@ public class SocketService extends Service {
                     break;
                 case SEND:
                     handleSendMessage(msg.arg1);
+                    break;
+                case SEND_CONFIG:
+                    handleSendConfig();
                     break;
                 default:
                     Bundle result = new Bundle();
