@@ -51,7 +51,6 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
     private MazeFragment mMazeFragment;
     private SocketService mSocketService;
     private Boolean mBound = false;
-    private Boolean mSocketConnected = false;
     private Boolean mIsControlFragmentVisible = false;
 
     /**
@@ -114,15 +113,15 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
             Intent settingsActivityIntent = new Intent(this, SettingsActivity.class);
             startActivity(settingsActivityIntent);
             return true;
-        } else if (id == R.id.action_connect && mBound && !mSocketConnected) {
+        } else if (id == R.id.action_connect && mBound) {
             setVisibilityLoadingProgressBarVisibility(View.VISIBLE);
             mSocketService.connect();
-        } else if (id == R.id.action_disconnect && mBound && mSocketConnected) {
+        } else if (id == R.id.action_disconnect && mBound) {
             setVisibilityLoadingProgressBarVisibility(View.VISIBLE);
             mSocketService.closeConnection();
         } else if (id == R.id.action_erase_image) {
+            mCar.init();
             mMazeFragment.mMazeCanvas.erase();
-
         }
 
         return super.onOptionsItemSelected(item);
@@ -166,13 +165,16 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
     public void onControlClicked(int direction) {
         switch (direction){
             case ControlsFragment.LEFT:
-                mSocketService.sendMessage(5);
+                mSocketService.sendMessage(5); // turn left server command code
                 break;
             case ControlsFragment.RIGHT:
-                mSocketService.sendMessage(4);
+                mSocketService.sendMessage(4); // turn right server command code
                 break;
             case ControlsFragment.MOVE:
-                mSocketService.sendMessage(3);
+                mSocketService.sendMessage(3); // move forward server command code
+                break;
+            case ControlsFragment.MOVEBACK:
+                mSocketService.sendMessage(6); // move back server command code
                 break;
         }
 
@@ -199,27 +201,25 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
     }
 
     /**
-     * Acknowledge the connection by setting {@link #mSocketConnected} to true
-     * and change {@link #mLoadingProgressBar} visibility to GONE.
+     * Acknowledge the connection,and change {@link #mLoadingProgressBar} visibility to GONE.
      * @see #setVisibilityLoadingProgressBarVisibility(int)
      */
     private void connected() {
-        mSocketConnected = true;
         setVisibilityLoadingProgressBarVisibility(View.GONE);
         Snackbar.make(mFab, "Connected :D", Snackbar.LENGTH_SHORT).show();
     }
 
     /**
-     * Acknowledge the disconnection by setting {@link #mSocketConnected} to false
-     * and change {@link #mLoadingProgressBar} visibility to GONE.
+     * Acknowledge the disconnection,and change {@link #mLoadingProgressBar} visibility to GONE.
      * @see #setVisibilityLoadingProgressBarVisibility(int)
      */
     private void disconnected() {
-        mSocketConnected = false;
 
-        mCar.setMode(Car.MODE_MANUAL);
-        flipFab(R.animator.rotate_yaxis_0);
-        changeFabIcon(R.drawable.ic_play_arrow_white_24dp);
+        if(mCar.getMode() == Car.MODE_AUTOMATIC){
+            mCar.setMode(Car.MODE_MANUAL);
+            flipFab(R.animator.rotate_yaxis_0);
+            changeFabIcon(R.drawable.ic_play_arrow_white_24dp);
+        }
 
         setVisibilityLoadingProgressBarVisibility(View.GONE);
     }
@@ -295,7 +295,9 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
                 int action = jsonObject.getInt("action");
                 if (action == Car.MOVE_FORWARD) {
                     mMazeFragment.draw(mCar.move());
-                } else {
+                } else if(action == Car.MOVE_BACKWARD) {
+                    mMazeFragment.draw(mCar.moveBack());
+                }else {
                     mCar.turn(action);
                 }
             }

@@ -12,6 +12,7 @@ public class Car {
     public static final int MOVE_FORWARD = 1;
     public static final int RIGTH = 2;
     public static final int LEFT = 3;
+    public static final int MOVE_BACKWARD = 4;
 
     public static final int MODE_AUTOMATIC = 1;
     public static final int MODE_MANUAL = 2;
@@ -21,8 +22,7 @@ public class Car {
     private int currentState;
 
     public Car() {
-        currentState = EAST;
-        mMode = MODE_MANUAL;
+        init();
     }
 
     /**
@@ -49,11 +49,27 @@ public class Car {
     }
 
     /**
-     * Determines wich way to move
-     * @return currentState
+     * Moves forward to the direction it is currently pointing
+     * @return currentState {@link #NORTH} |  {@link #WEST} |  {@link #SOUTH} |  {@link #EAST} |
      */
     public int move(){
         return currentState;
+    }
+
+    /**
+     * Moves to the opposite direction it is currently pointing
+     * whith out changing the currentState.
+     * @return opposite currentState {@link #NORTH} |  {@link #WEST} |  {@link #SOUTH} |  {@link #EAST} |
+     */
+    public int moveBack(){
+        if(currentState == NORTH)
+            return SOUTH;
+        else if(currentState == WEST)
+            return EAST;
+        else if(currentState == SOUTH)
+            return NORTH;
+        else
+            return WEST;
     }
 
     /**
@@ -72,5 +88,10 @@ public class Car {
         if(mode != MODE_AUTOMATIC && mode != MODE_MANUAL)
             return;
         this.mMode = mode;
+    }
+
+    public void init() {
+        currentState = EAST;
+        mMode = MODE_MANUAL;
     }
 }

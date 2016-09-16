@@ -34,4 +34,13 @@
         android:src="@drawable/ic_keyboard_arrow_right_white_36dp"
         style="@style/AppTheme.ControlButtoms" />
 
+    <android.support.v7.widget.AppCompatImageButton
+        android:id="@+id/control_button_down"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/control_button_left"
+        android:layout_toEndOf="@id/control_button_left"
+        android:src="@drawable/ic_keyboard_arrow_down_white_36dp"
+        style="@style/AppTheme.ControlButtoms" />
+
 </RelativeLayout>

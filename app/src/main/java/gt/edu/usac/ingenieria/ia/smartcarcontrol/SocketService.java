@@ -74,6 +74,11 @@ public class SocketService extends Service {
      * Tries to connect to the server through a socket.
      */
     private void handleConnect(){
+        if(mSocket != null && mSocket.isConnected()){
+            sendResponseToClient(CONNECT, ERROR, "Phone is already connected.");
+            return;
+        }
+
         String serverIp = PreferenceManager.getDefaultSharedPreferences(this).getString(getString(R.string.pref_server_ip_key), "192.168.43.1");
         int port;
         try{
@@ -81,8 +86,6 @@ public class SocketService extends Service {
         }catch (NumberFormatException e){
             port = 9898;
         }
-
-        Bundle result;
 
         try {
             mSocket = new Socket();
@@ -206,16 +209,17 @@ public class SocketService extends Service {
         @Override
         public void run() {
             String message;
-            Bundle result;
             while (mSocket.isConnected()){
                 try {
                     if((message = mInputSocketReader.readLine()) != null){
                         sendResponseToClient(SERVER_RESPONSE, SUCCESS, message);
                     }
                 } catch (IOException e) {
-                    sendResponseToClient(SERVER_RESPONSE, ERROR, e.getMessage());
+                    // sendResponseToClient(SERVER_RESPONSE, ERROR, e.getMessage());
                 }
             }
+
+            sendResponseToClient(SERVER_RESPONSE, ERROR, "Connection lost.");
         }
     }
 

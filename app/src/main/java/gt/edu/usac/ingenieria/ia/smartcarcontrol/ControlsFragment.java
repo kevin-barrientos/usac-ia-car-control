@@ -21,7 +21,8 @@ import butterknife.OnClick;
  */
 public class ControlsFragment extends Fragment {
 
-    public static final int MOVE = 100
+    public static final int MOVE = 100;
+    public static final int MOVEBACK = 200
             ;
     public static final int LEFT = Car.LEFT;
     public static final int RIGHT = Car.RIGTH;
@@ -80,6 +81,11 @@ public class ControlsFragment extends Fragment {
     @OnClick(R.id.control_button_right)
     void onRightClicked(){
         mListener.onControlClicked(RIGHT);
+    }
+
+    @OnClick(R.id.control_button_down)
+    void onDownClicked(){
+        mListener.onControlClicked(MOVEBACK);
     }
 
     public interface OnControlFragmentInteraction {

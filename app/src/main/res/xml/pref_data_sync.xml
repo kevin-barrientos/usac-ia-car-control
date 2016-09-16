@@ -7,7 +7,7 @@
 
         <EditTextPreference
             android:defaultValue="@string/pref_default_ip"
-            android:inputType="numberDecimal"
+            android:inputType="text"
             android:key="@string/pref_server_ip_key"
             android:maxLines="1"
             android:selectAllOnFocus="true"
