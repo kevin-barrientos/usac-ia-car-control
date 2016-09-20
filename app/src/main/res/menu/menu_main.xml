@@ -17,7 +17,7 @@
     <item
         android:id="@+id/action_send_config"
         android:orderInCategory="3"
-        android:title="@string/action_send_config"
+        android:title="@string/action_show_car_config"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_erase_image"

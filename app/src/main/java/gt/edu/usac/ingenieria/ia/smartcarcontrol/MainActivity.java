@@ -14,6 +14,7 @@ import android.os.IBinder;
 import android.os.ResultReceiver;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
@@ -36,7 +37,11 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-public class MainActivity extends AppCompatActivity implements ControlsFragment.OnControlFragmentInteraction, FragmentManager.OnBackStackChangedListener {
+public class MainActivity extends AppCompatActivity implements
+        ControlsFragment.OnControlFragmentInteraction,
+        FragmentManager.OnBackStackChangedListener,
+        CarTunningFragment.OnCarTunningInteractionListener
+{
 
 
     private final Car mCar = new Car();
@@ -123,7 +128,8 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
             mCar.init();
             mMazeFragment.mMazeCanvas.erase();
         } else if( id == R.id.action_send_config){
-            mSocketService.sendConfig();
+            DialogFragment newFragment = CarTunningFragment.newInstance();
+            newFragment.show(getSupportFragmentManager(), "CarConfigDialog");
         }
 
         return super.onOptionsItemSelected(item);
@@ -363,6 +369,11 @@ public class MainActivity extends AppCompatActivity implements ControlsFragment.
         set.setTarget(mLoadingProgressBar);
         set.start();
         mLoadingProgressBar.setVisibility(visibility);
+    }
+
+    @Override
+    public void done() {
+        mSocketService.sendConfig();
     }
 
     /**
