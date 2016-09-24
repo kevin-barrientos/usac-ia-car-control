@@ -4,26 +4,36 @@
     tools:context="gt.edu.usac.ingenieria.ia.smartcarcontrol.MainActivity">
     <item
         android:id="@+id/action_connect"
+        android:icon="@drawable/ic_phonelink_ring_white_24dp"
         android:orderInCategory="1"
         android:title="@string/action_connect"
-        android:icon="@drawable/ic_phonelink_ring_white_24dp"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_disconnect"
+        android:icon="@drawable/ic_phonelink_erase_white_24dp"
         android:orderInCategory="2"
         android:title="@string/action_disconnect"
-        android:icon="@drawable/ic_phonelink_erase_white_24dp"
+        android:visible="false"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_send_config"
+        android:icon="@drawable/ic_build_white_24dp"
         android:orderInCategory="3"
         android:title="@string/action_show_car_config"
-        app:showAsAction="never" />
+        android:visible="false"
+        app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_erase_image"
         android:orderInCategory="3"
         android:title="@string/action_erase_image"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_tomar_foto"
+        android:icon="@drawable/ic_photo_camera_white_24dp"
+        android:orderInCategory="4"
+        android:title="@string/action_tomar_foto"
+        android:visible="false"
+        app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"

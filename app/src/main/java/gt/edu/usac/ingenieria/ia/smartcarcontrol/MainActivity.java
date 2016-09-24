@@ -27,6 +27,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.dmitrymalkovich.android.ProgressFloatingActionButton;
 
@@ -82,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements
      * Gesture detector to listen for fling up gesture and a fling down gesture.
      */
     private GestureDetectorCompat mDetector;
+    private Menu mMenu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,6 +104,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
+        mMenu = menu;
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
@@ -127,6 +130,8 @@ public class MainActivity extends AppCompatActivity implements
         } else if (id == R.id.action_erase_image) {
             mCar.init();
             mMazeFragment.mMazeCanvas.erase();
+        } else if (id == R.id.action_tomar_foto) {
+            mSocketService.sendMessage(7);
         } else if( id == R.id.action_send_config){
             DialogFragment newFragment = CarTunningFragment.newInstance();
             newFragment.show(getSupportFragmentManager(), "CarConfigDialog");
@@ -166,6 +171,7 @@ public class MainActivity extends AppCompatActivity implements
         if (mBound) {
             unbindService(mConnection);
             mBound = false;
+            disconnected();
         }
     }
 
@@ -213,6 +219,12 @@ public class MainActivity extends AppCompatActivity implements
      * @see #setVisibilityLoadingProgressBarVisibility(int)
      */
     private void connected() {
+        if(mMenu != null){
+            changeMenuItemsVisibility(R.id.action_connect, false);
+            changeMenuItemsVisibility(R.id.action_disconnect, true);
+            changeMenuItemsVisibility(R.id.action_send_config, true);
+            changeMenuItemsVisibility(R.id.action_tomar_foto, true);
+        }
         setVisibilityLoadingProgressBarVisibility(View.GONE);
         Snackbar.make(mFab, "Connected :D", Snackbar.LENGTH_SHORT).show();
     }
@@ -222,6 +234,13 @@ public class MainActivity extends AppCompatActivity implements
      * @see #setVisibilityLoadingProgressBarVisibility(int)
      */
     private void disconnected() {
+
+        if(mMenu != null){
+            changeMenuItemsVisibility(R.id.action_send_config, false);
+            changeMenuItemsVisibility(R.id.action_tomar_foto, false);
+            changeMenuItemsVisibility(R.id.action_disconnect, false);
+            changeMenuItemsVisibility(R.id.action_connect, true);
+        }
 
         if(mCar.getMode() == Car.MODE_AUTOMATIC){
             mCar.setMode(Car.MODE_MANUAL);
@@ -297,6 +316,9 @@ public class MainActivity extends AppCompatActivity implements
                         flipFab(R.animator.rotate_yaxis_0);
                         changeFabIcon(R.drawable.ic_play_arrow_white_24dp);
                         break;
+                    case 7:
+                        Toast.makeText(this, jsonObject.getString("message"), Toast.LENGTH_SHORT).show();
+                        break;
                 }
 
             } else if (jsonObject.has("action")) { // the car took a move
@@ -369,6 +391,12 @@ public class MainActivity extends AppCompatActivity implements
         set.setTarget(mLoadingProgressBar);
         set.start();
         mLoadingProgressBar.setVisibility(visibility);
+    }
+
+    private void changeMenuItemsVisibility(int id, boolean visible){
+        MenuItem menuItem = mMenu.findItem(id);
+        if(menuItem != null)
+            menuItem.setVisible(visible);
     }
 
     @Override

@@ -36,5 +36,6 @@
     <string name="pref_move_time_key">pref_move_time_key</string>
     <string name="pref_title_move_time">Move time (ms)</string>
     <string name="done">Done</string>
+    <string name="action_tomar_foto">Tomar foto</string>
 
 </resources>
